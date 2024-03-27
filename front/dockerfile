@@ -1,0 +1,18 @@
+
+FROM node:21-alpine as build-step
+RUN npm install -g @angular/cli
+COPY package.json /app/
+COPY . /app/
+WORKDIR /app
+RUN npm install && npm run build -- --output-path=./dist/out
+
+
+FROM nginx AS prod
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build-step /app/dist/out/  /usr/share/nginx/html
+
+EXPOSE 8080
+
+RUN mkdir /etc/letsencrypt && \
+    chown root:101 /etc/letsencrypt && \
+    chmod 770 /etc/letsencrypt
